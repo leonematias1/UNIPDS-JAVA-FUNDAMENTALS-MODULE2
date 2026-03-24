@@ -1,0 +1,21 @@
+plugins {
+    id 'java'
+}
+
+group = 'mx.florinda'
+version = '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation platform('org.junit:junit-bom:5.10.0')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    implementation group: 'com.google.code.gson', name: 'gson', version: '2.13.2'
+}
+
+test {
+    useJUnitPlatform()
+}
