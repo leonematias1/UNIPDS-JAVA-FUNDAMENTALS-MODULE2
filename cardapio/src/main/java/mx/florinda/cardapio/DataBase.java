@@ -2,6 +2,7 @@ package mx.florinda.cardapio;
 
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -9,7 +10,8 @@ import static mx.florinda.cardapio.ItemCardapio.CategoriaCardapio.*;
 
 public class DataBase {
 
-    private final Map<Long, ItemCardapio> itensPorId = new HashMap<>();
+    //Thread safe pois ele passa o mesmo map para todas as threads
+    private final Map<Long, ItemCardapio> itensPorId = new ConcurrentSkipListMap<>();
 
     private final Map<ItemCardapio, BigDecimal> auditoria = new IdentityHashMap<>();
 
