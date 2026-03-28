@@ -10,10 +10,13 @@ repositories {
 }
 
 dependencies {
+    implementation group: 'com.google.code.gson', name: 'gson', version: '2.13.2'
+    implementation 'com.mysql:mysql-connector-j:9.6.0'
+    implementation 'org.json:json:20251224'
+
     testImplementation platform('org.junit:junit-bom:5.10.0')
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-    implementation group: 'com.google.code.gson', name: 'gson', version: '2.13.2'
 }
 
 test {

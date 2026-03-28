@@ -1,17 +1,16 @@
 package mx.florinda.cardapio;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.WeakHashMap;
 
 public class HistoricoVisualizacao {
 
-    private final DataBase database;
+    private final InMemoryDataBase database;
 
     private final Map<ItemCardapio, LocalDateTime> visualizacoes = new WeakHashMap<>();
 
-    public HistoricoVisualizacao(DataBase database){
+    public HistoricoVisualizacao(InMemoryDataBase database){
         this.database = database;
     }
 
