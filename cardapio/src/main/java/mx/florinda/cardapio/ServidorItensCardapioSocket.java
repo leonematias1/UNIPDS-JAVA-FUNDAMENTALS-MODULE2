@@ -13,7 +13,13 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.text.NumberFormat;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
 import java.util.List;
+import java.util.Locale;
+import java.util.ResourceBundle;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
@@ -202,8 +208,131 @@ public class ServidorItensCardapioSocket {
                 }
                 clientOut.println("HTTP/1.1 200 OK");
                 //curl -v -X POST -d '{"id":10,"newpreco":"299.99"}' -H 'Content-Type: application/json' http://localhost:8000/alter-preco-itens-cardapio
-            }
-            else {
+            }else if(methodAndURI.contains("GET /home") || methodAndURI.contains("GET /home-en")){
+                List<ItemCardapio> itens = database.listaDeItemCardapio();
+                StringBuilder htmlTodosOsItens = new StringBuilder();
+                Locale locale = methodAndURI.contains("-en") ? Locale.US : Locale.of("pt","BR");
+                NumberFormat formatadorMoeda = NumberFormat.getCurrencyInstance(locale);
+                ResourceBundle mensagens = ResourceBundle.getBundle("mensagens");
+
+                DateTimeFormatter formatterMesAno = DateTimeFormatter.ofPattern("MMMM/yyyy");
+
+                for (ItemCardapio item : itens) {
+                    String precoHtml;
+                    if (item.precoComDesconto() != null) {
+                            precoHtml = """
+                                            <p class="preco">
+                                              <span class="preco-antigo">%s</span>
+                                              <span class="preco-promo">%s</span>
+                                            </p>
+                                        """.formatted(
+                                                formatadorMoeda.format(item.preco()),
+                                                formatadorMoeda.format(item.precoComDesconto()));
+                    } else {
+                        precoHtml = """
+                                        <p class="preco">%s</p>
+                                    """.formatted(formatadorMoeda.format(item.preco()));
+                    }
+
+                   String itemHtml = """
+                                        <div class="item">
+                                            <h2>%s</h2>
+                                            <p>%s</p>
+                                            <h3>%s</h3>
+                                            %s
+                                        </div>
+                                    """.formatted(item.nome(), item.descricao(),
+                                    mensagens.getString("categoria.cardapio."+item.categoria().toString().toLowerCase()), precoHtml );
+
+                    htmlTodosOsItens.append(itemHtml);
+                }
+
+                String html = """
+                                <!DOCTYPE html>
+                                <html lang="pt-BR">
+                                <head>
+                                  <meta charset="UTF-8">
+                                  <title>Cardápio</title>
+                                  <style>
+                                    body {
+                                      font-family: Arial, sans-serif;
+                                      background: #f5f5f5;
+                                      margin: 20px;
+                                    }
+                                    
+                                    h1 {
+                                      text-align: center;
+                                    }
+                                
+                                    .cardapio {
+                                      display: grid;
+                                      grid-template-columns: repeat(5, 1fr);
+                                      gap: 15px;
+                                    }
+                                
+                                    .item {
+                                      background: white;
+                                      padding: 15px;
+                                      border-radius: 10px;
+                                      box-shadow: 0 0 8px rgba(0,0,0,0.1);
+                                      border: 1px solid #ddd; /* borda fina */
+                                    }
+                                
+                                    .item h2 {
+                                      margin: 0;
+                                      font-size: 18px;
+                                    }
+                                
+                                    .item h3 {
+                                      margin: 5px 0;
+                                      font-size: 14px;
+                                      color: #777;
+                                    }
+                                
+                                    .item p {
+                                      margin: 5px 0;
+                                      color: #555;
+                                    }
+                                
+                                    .preco {
+                                      margin-top: 10px;
+                                      font-weight: bold;
+                                    }
+                                
+                                    .preco-antigo {
+                                      text-decoration: line-through;
+                                      color: #999;
+                                      margin-right: 8px;
+                                    }
+                                
+                                    .preco-promo {
+                                      background: #fff9c4;
+                                      padding: 2px 6px;
+                                      border-radius: 4px;
+                                      color: #000;
+                                    }
+                                  </style>
+                                </head>
+                                <body>
+                                
+                                  <h1>Cardápio Dona Florinda</h1>
+                                
+                                  <div class="cardapio">
+                                    %s
+                                  </div>
+                                  <div style="text-align:center">
+                                    <h5>%s</h5>
+                                  </div>
+                                </body>
+                                </html>
+                            """.formatted(htmlTodosOsItens.toString(), formatterMesAno.format(ZonedDateTime.now()));
+
+                clientOut.print("HTTP/1.1 200 OK\r\n");
+                clientOut.print("Content-type: text/html; charset=UTF-8\r\n\r\n");
+                clientOut.println(html);
+                clientOut.println();
+
+            }else {
                 logger.warning("HTTP/1.1 404 Not Found");
                 clientOut.println("HTTP/1.1 404 Not Found");
             }
