@@ -5,12 +5,11 @@ import com.google.gson.JsonObject;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.PrintStream;
+import java.io.*;
 import java.math.BigDecimal;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.NumberFormat;
@@ -85,13 +84,39 @@ public class ServidorItensCardapioSocket {
             }else if(methodAndURI.contains("GET /itens-cardapio")){
                 logger.fine("Chamou itens-cardapio");
                 List<ItemCardapio> listItens = database.listaDeItemCardapio();
-                Gson gson = new Gson();
-                String json = gson.toJson(listItens);
-                clientOut.println("HTTP/1.1 200 OK");
-                clientOut.println("Content-type: application/json; charset=UTF-8");
-                clientOut.println();
-                clientOut.println(json);
+
+                String mediaType = "";
+                for(int i = 1 ; i < requestLineAndHeaderChunks.length ; i++){
+                    String header = requestLineAndHeaderChunks[i];
+                    logger.fine(header);
+                    if(header.contains("Accept")){
+                        mediaType = header.replace("Accept: ", "");
+                        logger.info(mediaType);
+                    }
+                }
+
+
+                byte[] body;
+                if("application/x-java-serialized-object".equals(mediaType)){
+                    mediaType = "application/x-java-serialized-object";
+                    var bos = new ByteArrayOutputStream();
+                    var oos = new ObjectOutputStream(bos);
+                    oos.writeObject(listItens);
+                    body = bos.toByteArray();
+                }else{
+                    mediaType = "application/json";
+                    Gson gson = new Gson();
+                    String json = gson.toJson(listItens);
+                    body = json.getBytes(StandardCharsets.UTF_8);
+                }
+
+                clientOS.write("HTTP/1.1 200 OK \r\n".getBytes(StandardCharsets.UTF_8));
+                clientOS.write(("Content-type: "+mediaType+"; charset=UTF-8 \r\n\r\n").getBytes(StandardCharsets.UTF_8));
+                clientOS.write(body);
+
                 //curl http://localhost:8000/itens-cardapio
+                //curl.exe -v -H "Accept: application/x-java-serialized-object" http://localhost:8000/itens-cardapio
+                //  curl.exe -v -H "Accept: application/x-java-serialized-object" http://localhost:8000/itens-cardapio --output itens.ser
             }else if(methodAndURI.contains("GET /total-itens-cardapio")){
                 logger.fine("Chamou itens-cardapio/total");
                 List<ItemCardapio> listItens = database.listaDeItemCardapio();
